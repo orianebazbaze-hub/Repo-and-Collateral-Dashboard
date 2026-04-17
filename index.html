@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Collateral Dashboard — Corporate Treasury</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+  :root {
+    --bg:    #0d0f14; --bg2: #13161e; --bg3: #1a1e28;
+    --bdr:   rgba(255,255,255,0.07); --bdr2: rgba(255,255,255,0.13);
+    --text:  #e8eaf0; --muted: #7a7f94;
+    --blue:  #4a8fe8; --teal: #2dc89a; --red: #e85050;
+    --amber: #f0a830; --green: #3ecf7a; --purple: #a078e8;
+    --font:  'IBM Plex Mono','Fira Code','Courier New',monospace;
+    --sans:  'Inter','Segoe UI',system-ui,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:13px;min-height:100vh;}
+  .topbar{display:flex;align-items:center;justify-content:space-between;padding:10px 20px;border-bottom:1px solid var(--bdr);background:var(--bg2);}
+  .topbar-title{font-family:var(--font);font-size:12px;color:var(--muted);letter-spacing:.05em;}
+  .topbar-title span{color:var(--text);}
+  .dot{width:6px;height:6px;border-radius:50%;background:var(--teal);display:inline-block;margin-right:5px;animation:pulse 2s infinite;}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+  .ts{font-family:var(--font);font-size:10px;color:var(--muted);}
+  .layout{display:grid;grid-template-columns:180px 1fr;min-height:calc(100vh - 45px);}
+  .sidebar{background:var(--bg2);border-right:1px solid var(--bdr);padding:14px 0;}
+  .sid-sec{font-size:9px;color:var(--muted);letter-spacing:.1em;padding:0 14px 6px;margin-top:12px;}
+  .nav-item{display:flex;align-items:center;gap:8px;padding:8px 14px;font-size:12px;color:var(--muted);border-left:2px solid transparent;cursor:pointer;transition:all .15s;}
+  .nav-item:hover{color:var(--text);background:rgba(255,255,255,.03);}
+  .nav-item.active{color:var(--blue);border-left-color:var(--blue);background:rgba(74,143,232,.06);}
+  .badge{margin-left:auto;font-size:9px;padding:2px 5px;border-radius:3px;font-family:var(--font);}
+  .b-ok{background:rgba(62,207,122,.15);color:var(--green);}
+  .b-warn{background:rgba(240,168,48,.15);color:var(--amber);}
+  .b-err{background:rgba(232,80,80,.15);color:var(--red);}
+  .content{padding:18px;overflow-y:auto;}
+  .tab-pane{display:none;}.tab-pane.active{display:block;}
+  .metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px;}
+  .mc{background:var(--bg2);border:1px solid var(--bdr);border-radius:6px;padding:11px 14px;}
+  .mc-label{font-family:var(--font);font-size:9px;color:var(--muted);letter-spacing:.07em;margin-bottom:5px;}
+  .mc-val{font-family:var(--font);font-size:19px;font-weight:600;}
+  .mc-sub{font-size:10px;color:var(--muted);margin-top:2px;}
+  .red{color:var(--red);}.green{color:var(--green);}.amber{color:var(--amber);}.blue{color:var(--blue);}.teal{color:var(--teal);}
+  .panel{background:var(--bg2);border:1px solid var(--bdr);border-radius:7px;padding:14px;margin-bottom:14px;}
+  .panel-title{font-family:var(--font);font-size:9px;color:var(--muted);letter-spacing:.1em;margin-bottom:12px;}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;}
+  .tag{display:inline-block;padding:1px 6px;border-radius:3px;font-size:9px;font-weight:600;font-family:var(--font);}
+  .t-l1{background:rgba(74,143,232,.15);color:var(--blue);}
+  .t-l2a{background:rgba(45,200,154,.15);color:var(--teal);}
+  .t-l2b{background:rgba(240,168,48,.15);color:var(--amber);}
+  .t-ok{background:rgba(62,207,122,.12);color:var(--green);}
+  .t-warn{background:rgba(240,168,48,.12);color:var(--amber);}
+  .t-err{background:rgba(232,80,80,.12);color:var(--red);}
+  .t-bi{background:rgba(160,120,232,.15);color:var(--purple);}
+  .t-tri{background:rgba(74,143,232,.12);color:var(--blue);}
+  .t-gov{background:rgba(62,207,122,.12);color:var(--green);}
+  .t-corp{background:rgba(240,168,48,.12);color:var(--amber);}
+  .t-agn{background:rgba(160,120,232,.12);color:var(--purple);}
+  .t-cov{background:rgba(74,143,232,.12);color:var(--blue);}
+  table{width:100%;border-collapse:collapse;}
+  th{font-family:var(--font);font-size:9px;color:var(--muted);padding:5px 8px;border-bottom:1px solid var(--bdr);text-align:left;letter-spacing:.05em;white-space:nowrap;}
+  td{padding:6px 8px;border-bottom:1px solid rgba(255,255,255,.04);font-family:var(--font);font-size:11px;color:var(--text);}
+  tr:last-child td{border-bottom:none;}
+  tr.total-row td{font-weight:700;border-top:1px solid var(--bdr2);}
+  .num{text-align:right;}
+  .slider-wrap{margin-bottom:12px;}
+  .slider-hdr{display:flex;justify-content:space-between;margin-bottom:5px;}
+  .slider-label{font-size:12px;color:var(--muted);}
+  .slider-val{font-family:var(--font);font-size:12px;color:var(--text);}
+  input[type=range]{-webkit-appearance:none;width:100%;height:4px;border-radius:2px;background:rgba(255,255,255,.1);outline:none;}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:var(--blue);cursor:pointer;}
+  .bar-row{display:flex;align-items:center;gap:8px;margin-bottom:5px;}
+  .bl{font-family:var(--font);font-size:9px;color:var(--muted);width:32px;text-align:right;flex-shrink:0;}
+  .bt{flex:1;height:7px;background:rgba(255,255,255,.05);border-radius:3px;overflow:hidden;}
+  .bf{height:100%;border-radius:3px;}
+  .bv{font-family:var(--font);font-size:10px;color:var(--text);width:70px;text-align:right;flex-shrink:0;}
+  .call-card{background:var(--bg3);border:1px solid var(--bdr2);border-radius:6px;padding:12px 14px;margin-bottom:8px;}
+  .call-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;}
+  .call-name{font-size:13px;font-weight:500;}
+  .call-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;}
+  .call-item{background:rgba(255,255,255,.03);border-radius:4px;padding:6px 8px;}
+  .call-item-label{font-family:var(--font);font-size:8px;color:var(--muted);margin-bottom:3px;}
+  .call-item-val{font-family:var(--font);font-size:12px;}
+  .hc-cell{text-align:center;padding:5px 6px;font-family:var(--font);font-size:10px;border:1px solid rgba(255,255,255,.05);}
+  .loading{color:var(--muted);font-family:var(--font);font-size:11px;padding:14px 0;}
+  .spin{display:inline-block;width:10px;height:10px;border:1px solid var(--bdr2);border-top-color:var(--blue);border-radius:50%;animation:spin .8s linear infinite;margin-right:6px;}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .divider{height:1px;background:var(--bdr);margin:14px 0;}
+  .call-alert{background:rgba(232,80,80,.07);border:1px solid rgba(232,80,80,.25);border-radius:6px;padding:10px 14px;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;}
+  .stress-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px;}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-title">CORPORATE TREASURY / <span>COLLATERAL MANAGEMENT</span></div>
+  <div style="display:flex;gap:14px;align-items:center;">
+    <div><span class="dot"></span><span class="ts">LIVE</span></div>
+    <div class="ts" id="ts"></div>
+  </div>
+</div>
+
+<div class="layout">
+  <nav class="sidebar">
+    <div class="sid-sec">COLLATERAL</div>
+    <div class="nav-item active" onclick="nav('overview',this)">◈ Overview</div>
+    <div class="nav-item" onclick="nav('pool',this)">◫ Collateral pool</div>
+    <div class="nav-item" onclick="nav('haircuts',this)">▦ Haircut matrix</div>
+    <div class="sid-sec">REPO BOOK</div>
+    <div class="nav-item" onclick="nav('repo',this)">⇄ Repo positions</div>
+    <div class="nav-item" onclick="nav('margins',this)">⚡ Margin calls <span class="badge b-warn" id="badge-calls">—</span></div>
+    <div class="sid-sec">RISK</div>
+    <div class="nav-item" onclick="nav('stress',this)">⊞ Stress scenarios</div>
+  </nav>
+
+  <div class="content">
+
+    <!-- OVERVIEW -->
+    <div id="pane-overview" class="tab-pane active">
+      <div class="metrics">
+        <div class="mc"><div class="mc-label">POOL MARKET VALUE</div><div class="mc-val blue" id="ov-mv">—</div><div class="mc-sub">total collateral pool</div></div>
+        <div class="mc"><div class="mc-label">COLLATERAL VALUE</div><div class="mc-val teal" id="ov-cv">—</div><div class="mc-sub">after haircut</div></div>
+        <div class="mc"><div class="mc-label">REPO BOOK</div><div class="mc-val" id="ov-notional">—</div><div class="mc-sub">total notional funded</div></div>
+        <div class="mc"><div class="mc-label">MARGIN CALLS</div><div class="mc-val amber" id="ov-calls">—</div><div class="mc-sub">active / pending</div></div>
+      </div>
+      <div class="grid2">
+        <div class="panel">
+          <div class="panel-title">COLLATERAL POOL — BY ASSET CLASS</div>
+          <div style="position:relative;height:200px;"><canvas id="poolDonut" role="img" aria-label="Collateral pool by asset class">Pool composition by asset class.</canvas></div>
+          <div id="pool-legend" style="display:flex;gap:12px;margin-top:10px;flex-wrap:wrap;"></div>
+        </div>
+        <div class="panel">
+          <div class="panel-title">HQLA TIER BREAKDOWN</div>
+          <div id="hqla-bars" class="loading"><span class="spin"></span>Loading…</div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-title">REPO BOOK SUMMARY</div>
+        <div id="repo-summary-table" class="loading"><span class="spin"></span>Loading…</div>
+      </div>
+    </div>
+
+    <!-- POOL -->
+    <div id="pane-pool" class="tab-pane">
+      <div class="panel">
+        <div class="panel-title">COLLATERAL POOL — FULL DETAIL</div>
+        <div style="overflow-x:auto;">
+          <table id="pool-table">
+            <thead><tr>
+              <th>ID</th><th>Instrument</th><th>Class</th><th>Rating</th>
+              <th class="num">Maturity</th><th class="num">Face (€M)</th>
+              <th class="num">Price</th><th class="num">Mkt value (€M)</th>
+              <th class="num">Haircut %</th><th class="num">Coll. value (€M)</th>
+              <th class="num">Duration</th><th>HQLA</th><th>ECB</th>
+            </tr></thead>
+            <tbody><tr><td colspan="13" class="loading"><span class="spin"></span></td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- HAIRCUTS -->
+    <div id="pane-haircuts" class="tab-pane">
+      <div class="panel">
+        <div class="panel-title">HAIRCUT MATRIX — ICMA / ECB ELIGIBILITY FRAMEWORK (%)</div>
+        <div id="hc-matrix" class="loading"><span class="spin"></span>Loading…</div>
+        <div style="margin-top:14px;font-size:11px;color:var(--muted);">
+          Haircuts applied per ICMA Global Master Repo Agreement (GMRA) and ECB collateral framework. Colour intensity reflects haircut severity.
+        </div>
+      </div>
+    </div>
+
+    <!-- REPO -->
+    <div id="pane-repo" class="tab-pane">
+      <div class="metrics" style="grid-template-columns:repeat(3,1fr);">
+        <div class="mc"><div class="mc-label">TOTAL NOTIONAL</div><div class="mc-val blue" id="r-notional">—</div><div class="mc-sub">repo book funded</div></div>
+        <div class="mc"><div class="mc-label">TOTAL INIT. MARGIN</div><div class="mc-val amber" id="r-im">—</div><div class="mc-sub">SIMM-based estimate</div></div>
+        <div class="mc"><div class="mc-label">ACTIVE MARGIN CALLS</div><div class="mc-val red" id="r-calls">—</div><div class="mc-sub">vs threshold + MTA</div></div>
+      </div>
+      <div class="panel">
+        <div class="panel-title">REPO POSITIONS — IM / VM / MARGIN CALL STATUS</div>
+        <div style="overflow-x:auto;">
+          <table id="repo-table">
+            <thead><tr>
+              <th>ID</th><th>Counterparty</th><th>Collateral</th><th>Type</th>
+              <th class="num">Notional (€M)</th><th class="num">Rate %</th><th class="num">Days</th>
+              <th class="num">Haircut %</th><th class="num">MV (€M)</th><th class="num">CV (€M)</th>
+              <th class="num">VM (€)</th><th class="num">IM (€)</th>
+              <th class="num">Threshold</th><th class="num">MTA</th><th>Status</th>
+            </tr></thead>
+            <tbody><tr><td colspan="15" class="loading"><span class="spin"></span></td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- MARGIN CALLS -->
+    <div id="pane-margins" class="tab-pane">
+      <div id="call-alerts"></div>
+      <div id="call-cards" class="loading"><span class="spin"></span>Loading…</div>
+    </div>
+
+    <!-- STRESS -->
+    <div id="pane-stress" class="tab-pane">
+      <div class="panel">
+        <div class="panel-title">STRESS SCENARIO — PARALLEL RATE SHIFT</div>
+        <div class="slider-wrap">
+          <div class="slider-hdr">
+            <span class="slider-label">Rate shift (basis points)</span>
+            <span class="slider-val" id="stress-val">+100bp</span>
+          </div>
+          <input type="range" min="-200" max="200" step="10" value="100" id="stress-slider" oninput="updateStress()">
+        </div>
+        <div class="stress-summary">
+          <div class="mc"><div class="mc-label">MV CHANGE</div><div class="mc-val" id="st-mv-chg">—</div><div class="mc-sub">total pool</div></div>
+          <div class="mc"><div class="mc-label">CV CHANGE</div><div class="mc-val" id="st-cv-chg">—</div><div class="mc-sub">after haircut</div></div>
+          <div class="mc"><div class="mc-label">NEW MARGIN CALLS</div><div class="mc-val red" id="st-calls">—</div><div class="mc-sub">triggered by scenario</div></div>
+        </div>
+      </div>
+      <div class="grid2">
+        <div class="panel">
+          <div class="panel-title">REPO IMPACT — STRESSED COLLATERAL VALUES</div>
+          <div style="overflow-x:auto;"><table id="stress-table">
+            <thead><tr>
+              <th>Counterparty</th><th>Collateral</th>
+              <th class="num">MV base (€M)</th><th class="num">MV stressed (€M)</th><th class="num">Change (€M)</th>
+              <th class="num">VM stressed</th><th>Call?</th>
+            </tr></thead>
+            <tbody><tr><td colspan="7" class="loading"><span class="spin"></span></td></tr></tbody>
+          </table></div>
+        </div>
+        <div class="panel">
+          <div class="panel-title">MARGIN CALLS vs RATE SHIFT — SENSITIVITY CURVE</div>
+          <div style="position:relative;height:200px;"><canvas id="stressChart" role="img" aria-label="Number of margin calls triggered per rate shift scenario">Margin calls triggered per rate shift.</canvas></div>
+          <div style="margin-top:8px;position:relative;height:160px;"><canvas id="mvChart" role="img" aria-label="Total collateral value change per rate shift">CV change per rate shift.</canvas></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+const API = '';
+let stressChartInst = null, mvChartInst = null;
+
+function fmt(n, prefix='€', suffix='') {
+  const abs = Math.abs(n);
+  let s;
+  if (abs >= 1e9)      s = (n/1e9).toFixed(2)+'Bn';
+  else if (abs >= 1e6) s = (n/1e6).toFixed(1)+'M';
+  else if (abs >= 1e3) s = (n/1e3).toFixed(1)+'K';
+  else                 s = Math.round(n).toLocaleString();
+  return (n<0?'–':'')+prefix+s+suffix;
+}
+
+function fmtM(v){ return (v/1e6).toFixed(2); }
+function fmtK(v){ const s=(v/1e3).toFixed(1); return (v<0?'–':'+')+'€'+Math.abs(s)+'K'; }
+
+// Clock
+function tick(){ document.getElementById('ts').textContent=new Date().toLocaleString('en-GB',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}); }
+tick(); setInterval(tick,30000);
+
+// Nav
+function nav(pane, el) {
+  document.querySelectorAll('.tab-pane').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('pane-'+pane).classList.add('active');
+  el.classList.add('active');
+  if (pane==='pool'     && !window._pool)    { loadPool();    window._pool=true; }
+  if (pane==='haircuts' && !window._hc)      { loadHaircuts();window._hc=true;   }
+  if (pane==='repo'     && !window._repo)    { loadRepo();    window._repo=true;  }
+  if (pane==='margins'  && !window._margins) { loadMargins(); window._margins=true; }
+  if (pane==='stress'   && !window._stress)  { loadStress();  window._stress=true; }
+}
+
+function classTag(ac) {
+  if (ac==='govt')    return '<span class="tag t-gov">GOVT</span>';
+  if (ac==='agency')  return '<span class="tag t-agn">AGENCY</span>';
+  if (ac==='covered') return '<span class="tag t-cov">COVERED</span>';
+  return '<span class="tag t-corp">CORP</span>';
+}
+function hqlaTag(h) {
+  if (h==='L1')  return '<span class="tag t-l1">L1</span>';
+  if (h==='L2A') return '<span class="tag t-l2a">L2A</span>';
+  return '<span class="tag t-l2b">L2B</span>';
+}
+function statusTag(s) {
+  if (s==='CALL')    return '<span class="tag t-err">CALL</span>';
+  if (s==='MONITOR') return '<span class="tag t-warn">MONITOR</span>';
+  return '<span class="tag t-ok">OK</span>';
+}
+
+// ─── OVERVIEW ──────────────────────────────────────────────────────────
+async function loadOverview() {
+  const [pool, repo, calls] = await Promise.all([
+    fetch(API+'/api/pool').then(r=>r.json()),
+    fetch(API+'/api/repo').then(r=>r.json()),
+    fetch(API+'/api/margin_calls').then(r=>r.json()),
+  ]);
+
+  document.getElementById('ov-mv').textContent       = fmt(pool.total_market_value);
+  document.getElementById('ov-cv').textContent       = fmt(pool.total_collateral_value);
+  document.getElementById('ov-notional').textContent = fmt(repo.total_notional);
+  document.getElementById('ov-calls').textContent    = repo.margin_calls + ' active';
+  document.getElementById('badge-calls').textContent = repo.margin_calls || '0';
+  document.getElementById('badge-calls').className   = 'badge ' + (repo.margin_calls > 0 ? 'b-err' : 'b-ok');
+
+  // Donut by asset class
+  const byClass = {};
+  pool.pool.forEach(p => {
+    byClass[p.asset_class] = (byClass[p.asset_class]||0) + p.market_value;
+  });
+  const colors = {govt:'#3ecf7a', agency:'#a078e8', covered:'#4a8fe8', corp:'#f0a830'};
+  const labels = Object.keys(byClass);
+  new Chart(document.getElementById('poolDonut'), {
+    type:'doughnut',
+    data:{ labels:labels.map(l=>l.toUpperCase()),
+      datasets:[{ data:labels.map(l=>byClass[l]), backgroundColor:labels.map(l=>colors[l]||'#7a7f94'), borderWidth:0 }]
+    },
+    options:{ responsive:true, maintainAspectRatio:false, cutout:'68%', plugins:{ legend:{ display:false } } }
+  });
+  const leg = document.getElementById('pool-legend');
+  labels.forEach(l=>{
+    leg.innerHTML += `<div style="display:flex;align-items:center;gap:5px;font-size:10px;color:var(--muted)">
+      <div style="width:9px;height:9px;border-radius:2px;background:${colors[l]||'#7a7f94'}"></div>
+      ${l.toUpperCase()}: ${fmtM(byClass[l])}M</div>`;
+  });
+
+  // HQLA bars
+  const byHqla = {L1:0, L2A:0, L2B:0};
+  pool.pool.forEach(p => { byHqla[p.hqla] = (byHqla[p.hqla]||0) + p.market_value; });
+  const total = pool.total_market_value;
+  const hqlaWrap = document.getElementById('hqla-bars');
+  hqlaWrap.innerHTML = '';
+  [['L1','#4a8fe8'],['L2A','#2dc89a'],['L2B','#f0a830']].forEach(([t,c])=>{
+    const pct = (byHqla[t]||0)/total*100;
+    hqlaWrap.innerHTML += `<div class="bar-row">
+      <div class="bl">${t}</div>
+      <div class="bt"><div class="bf" style="width:${pct.toFixed(1)}%;background:${c}"></div></div>
+      <div class="bv">${fmtM(byHqla[t]||0)}M</div>
+    </div>`;
+  });
+  const ecbElig = pool.pool.filter(p=>p.ecb_eligible).reduce((s,p)=>s+p.market_value,0);
+  hqlaWrap.innerHTML += `<div class="divider"></div>
+    <div style="font-family:var(--font);font-size:10px;color:var(--muted);margin-bottom:5px;">ECB ELIGIBLE</div>
+    <div class="bar-row">
+      <div class="bl" style="width:60px;font-size:9px">ECB elig.</div>
+      <div class="bt"><div class="bf" style="width:${(ecbElig/total*100).toFixed(1)}%;background:#4a8fe8"></div></div>
+      <div class="bv">${fmtM(ecbElig)}M</div>
+    </div>`;
+
+  // Repo summary table
+  const rsWrap = document.getElementById('repo-summary-table');
+  let th = '<thead><tr><th>ID</th><th>Counterparty</th><th>Collateral</th><th>Type</th><th class="num">Notional (€M)</th><th class="num">IM (€)</th><th class="num">VM (€)</th><th>Status</th></tr></thead>';
+  let rows = '';
+  repo.repos.forEach((r,i)=>{
+    const vmColor = r.vm < 0 ? 'color:var(--red)' : 'color:var(--teal)';
+    const type = r.type==='bilateral'?'<span class="tag t-bi">BILATERAL</span>':'<span class="tag t-tri">TRIPARTY</span>';
+    rows += `<tr><td>${r.id}</td><td>${r.counterparty}</td><td>${r.collateral}</td><td>${type}</td>
+      <td class="num">${fmtM(r.notional)}</td>
+      <td class="num">${(r.initial_margin/1000).toFixed(0)}K</td>
+      <td class="num" style="${vmColor}">${fmtK(r.vm)}</td>
+      <td>${statusTag(r.call_triggered?'CALL':(Math.abs(r.vm)>r.threshold*.7?'MONITOR':'OK'))}</td></tr>`;
+  });
+  rsWrap.innerHTML = `<table>${th}<tbody>${rows}</tbody></table>`;
+}
+
+// ─── POOL ──────────────────────────────────────────────────────────────
+async function loadPool() {
+  const d = await fetch(API+'/api/pool').then(r=>r.json());
+  const tbody = document.querySelector('#pool-table tbody');
+  tbody.innerHTML = '';
+  d.pool.forEach(p=>{
+    tbody.innerHTML += `<tr>
+      <td style="color:var(--muted)">${p.id}</td>
+      <td>${p.label}</td>
+      <td>${classTag(p.asset_class)}</td>
+      <td>${p.rating}</td>
+      <td class="num">${p.maturity}Y</td>
+      <td class="num">${fmtM(p.face)}</td>
+      <td class="num">${p.price.toFixed(3)}</td>
+      <td class="num blue">${fmtM(p.market_value)}</td>
+      <td class="num amber">${p.haircut.toFixed(2)}%</td>
+      <td class="num teal">${fmtM(p.collateral_value)}</td>
+      <td class="num">${p.duration.toFixed(2)}</td>
+      <td>${hqlaTag(p.hqla)}</td>
+      <td>${p.ecb_eligible?'<span class="tag t-ok">YES</span>':'<span class="tag t-warn">NO</span>'}</td>
+    </tr>`;
+  });
+  tbody.innerHTML += `<tr class="total-row">
+    <td colspan="7">TOTAL</td>
+    <td class="num blue">${fmtM(d.total_market_value)}</td>
+    <td></td><td class="num teal">${fmtM(d.total_collateral_value)}</td>
+    <td colspan="3"></td>
+  </tr>`;
+}
+
+// ─── HAIRCUTS ──────────────────────────────────────────────────────────
+async function loadHaircuts() {
+  const d = await fetch(API+'/api/haircuts').then(r=>r.json());
+  const wrap = document.getElementById('hc-matrix');
+  const maxHC = 11;
+  const getColor = (v) => {
+    if (v===null) return 'background:rgba(255,255,255,.03);color:var(--muted)';
+    const intensity = v / maxHC;
+    const r = Math.round(232 * intensity);
+    const g = Math.round(207 * (1-intensity));
+    return `background:rgba(${r},${g},80,${0.12+intensity*0.25});color:var(--text)`;
+  };
+  let html = `<div style="overflow-x:auto;"><table style="width:100%">
+    <thead><tr><th style="text-align:left;padding:5px 8px;font-size:9px">Asset class</th>`;
+  d.buckets.forEach(b=>{ html += `<th class="hc-cell" style="font-size:9px;color:var(--muted)">${b}</th>`; });
+  html += '</tr></thead><tbody>';
+  d.matrix.forEach(row=>{
+    html += `<tr><td style="padding:5px 8px;font-size:10px;white-space:nowrap">${row.label}</td>`;
+    d.buckets.forEach(b=>{
+      const v = row.buckets[b];
+      html += `<td class="hc-cell" style="${getColor(v)}">${v !== null ? v.toFixed(1)+'%' : '—'}</td>`;
+    });
+    html += '</tr>';
+  });
+  html += '</tbody></table></div>';
+  wrap.innerHTML = html;
+}
+
+// ─── REPO ──────────────────────────────────────────────────────────────
+async function loadRepo() {
+  const d = await fetch(API+'/api/repo').then(r=>r.json());
+  document.getElementById('r-notional').textContent = fmt(d.total_notional);
+  document.getElementById('r-im').textContent = fmt(d.total_im);
+  document.getElementById('r-calls').textContent = d.margin_calls;
+
+  const tbody = document.querySelector('#repo-table tbody');
+  tbody.innerHTML = '';
+  d.repos.forEach(r=>{
+    const vmC = r.vm<0?'color:var(--red)':'color:var(--teal)';
+    const type = r.type==='bilateral'?'<span class="tag t-bi">BI</span>':'<span class="tag t-tri">TRI</span>';
+    const status = r.call_triggered ? statusTag('CALL') : (Math.abs(r.vm)>r.threshold*.7?statusTag('MONITOR'):statusTag('OK'));
+    tbody.innerHTML += `<tr>
+      <td style="color:var(--muted)">${r.id}</td>
+      <td>${r.counterparty}</td>
+      <td style="font-size:10px">${r.collateral}</td>
+      <td>${type}</td>
+      <td class="num">${fmtM(r.notional)}</td>
+      <td class="num">${r.repo_rate.toFixed(3)}</td>
+      <td class="num">${r.maturity_days}</td>
+      <td class="num amber">${r.haircut.toFixed(2)}%</td>
+      <td class="num">${fmtM(r.market_value)}</td>
+      <td class="num teal">${fmtM(r.collateral_value)}</td>
+      <td class="num" style="${vmC}">${fmtK(r.vm)}</td>
+      <td class="num amber">${(r.initial_margin/1000).toFixed(0)}K</td>
+      <td class="num">${(r.threshold/1000).toFixed(0)}K</td>
+      <td class="num">${(r.mta/1000).toFixed(0)}K</td>
+      <td>${status}</td>
+    </tr>`;
+  });
+}
+
+// ─── MARGINS ───────────────────────────────────────────────────────────
+async function loadMargins() {
+  const d = await fetch(API+'/api/margin_calls').then(r=>r.json());
+  const alerts = document.getElementById('call-alerts');
+  const callCalls = d.calls.filter(c=>c.status==='CALL');
+  callCalls.forEach(c=>{
+    alerts.innerHTML += `<div class="call-alert">
+      <div><span style="color:var(--red);font-weight:600">MARGIN CALL</span> — ${c.counterparty} | ${c.collateral}</div>
+      <div style="font-family:var(--font);font-size:12px;color:var(--red)">${fmt(Math.abs(c.call_amount))} required</div>
+    </div>`;
+  });
+
+  const wrap = document.getElementById('call-cards');
+  wrap.innerHTML = '';
+  d.calls.forEach(c=>{
+    const vmC = c.vm<0?'var(--red)':'var(--teal)';
+    const stBg = c.status==='CALL'?'rgba(232,80,80,.07)':c.status==='MONITOR'?'rgba(240,168,48,.05)':'';
+    wrap.innerHTML += `<div class="call-card" style="border-color:${c.status==='CALL'?'rgba(232,80,80,.3)':c.status==='MONITOR'?'rgba(240,168,48,.2)':'var(--bdr2)'}">
+      <div class="call-header">
+        <div>
+          <div class="call-name">${c.counterparty}</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:2px">${c.collateral} — Notional: €${fmtM(c.notional)}M</div>
+        </div>
+        ${statusTag(c.status)}
+      </div>
+      <div class="call-grid">
+        <div class="call-item"><div class="call-item-label">VARIATION MARGIN</div><div class="call-item-val" style="color:${vmC}">${fmtK(c.vm)}</div></div>
+        <div class="call-item"><div class="call-item-label">INIT. MARGIN (SIMM)</div><div class="call-item-val amber">${(c.im/1000).toFixed(0)}K</div></div>
+        <div class="call-item"><div class="call-item-label">THRESHOLD</div><div class="call-item-val">${(c.threshold/1000).toFixed(0)}K</div></div>
+        <div class="call-item"><div class="call-item-label">MTA / ROUNDING</div><div class="call-item-val">${(c.mta/1000).toFixed(0)}K / ${(c.rounding/1000).toFixed(0)}K</div></div>
+        ${c.call_triggered?`<div class="call-item" style="grid-column:span 4;background:rgba(232,80,80,.08)"><div class="call-item-label">CALL AMOUNT (after threshold + MTA + rounding)</div><div class="call-item-val red">${fmt(Math.abs(c.call_amount))}</div></div>`:''}
+      </div>
+    </div>`;
+  });
+}
+
+// ─── STRESS ────────────────────────────────────────────────────────────
+async function loadStress() {
+  await updateStress();
+}
+
+async function updateStress() {
+  const shift = +document.getElementById('stress-slider').value;
+  document.getElementById('stress-val').textContent = (shift>=0?'+':'')+shift+'bp';
+  const d = await fetch(`${API}/api/stress?shift=${shift}`).then(r=>r.json());
+
+  const mvChg = d.total_mv_change;
+  const cvChg = d.total_cv_stress - d.total_cv_base;
+  document.getElementById('st-mv-chg').textContent = (mvChg>=0?'+':'')+fmtM(mvChg)+'M';
+  document.getElementById('st-mv-chg').className   = 'mc-val '+(mvChg>=0?'green':'red');
+  document.getElementById('st-cv-chg').textContent = (cvChg>=0?'+':'')+fmtM(cvChg)+'M';
+  document.getElementById('st-cv-chg').className   = 'mc-val '+(cvChg>=0?'green':'red');
+  document.getElementById('st-calls').textContent  = d.calls_triggered;
+
+  const tbody = document.querySelector('#stress-table tbody');
+  tbody.innerHTML = '';
+  d.repos.forEach(r=>{
+    const chgC = r.mv_change<0?'color:var(--red)':'color:var(--teal)';
+    const vmC  = r.vm_stress<0?'color:var(--red)':'color:var(--teal)';
+    const newCall = r.new_call?'<span class="tag t-err">NEW CALL</span>':r.call_stress?'<span class="tag t-err">CALL</span>':'<span class="tag t-ok">OK</span>';
+    tbody.innerHTML += `<tr>
+      <td>${r.counterparty}</td>
+      <td style="font-size:10px">${r.collateral}</td>
+      <td class="num">${fmtM(r.mv_base)}</td>
+      <td class="num" style="${chgC}">${fmtM(r.mv_stress)}</td>
+      <td class="num" style="${chgC}">${r.mv_change>=0?'+':''}${fmtM(r.mv_change)}</td>
+      <td class="num" style="${vmC}">${fmtK(r.vm_stress)}</td>
+      <td>${newCall}</td>
+    </tr>`;
+  });
+
+  // Sensitivity charts
+  const shifts     = d.scenarios.map(s=>s.shift);
+  const callCounts = d.scenarios.map(s=>s.margin_calls);
+  const cvChanges  = d.scenarios.map(s=>((s.total_cv-d.total_cv_base)/1e6).toFixed(2));
+
+  if (stressChartInst) stressChartInst.destroy();
+  stressChartInst = new Chart(document.getElementById('stressChart'), {
+    type:'bar',
+    data:{ labels:shifts.map(s=>(s>=0?'+':'')+s+'bp'),
+      datasets:[{ data:callCounts, backgroundColor:callCounts.map(v=>v>0?'rgba(232,80,80,.7)':'rgba(62,207,122,.7)'), borderRadius:3 }]
+    },
+    options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}},
+      scales:{ x:{ticks:{color:'#7a7f94',font:{size:9}},grid:{display:false}},
+               y:{ticks:{color:'#7a7f94',font:{size:9},stepSize:1},grid:{color:'rgba(255,255,255,.04)'}} }
+    }
+  });
+
+  if (mvChartInst) mvChartInst.destroy();
+  mvChartInst = new Chart(document.getElementById('mvChart'), {
+    type:'line',
+    data:{ labels:shifts.map(s=>(s>=0?'+':'')+s+'bp'),
+      datasets:[{ data:cvChanges, borderColor:'#4a8fe8', borderWidth:2, pointRadius:0, tension:.3, fill:{target:'origin',above:'rgba(62,207,122,.06)',below:'rgba(232,80,80,.06)'} }]
+    },
+    options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}},
+      scales:{ x:{ticks:{color:'#7a7f94',font:{size:9}},grid:{display:false}},
+               y:{ticks:{callback:v=>(v>=0?'+':'')+v+'M',color:'#7a7f94',font:{size:9,family:'IBM Plex Mono'}},grid:{color:'rgba(255,255,255,.04)'}} }
+    }
+  });
+}
+
+// ─── INIT ──────────────────────────────────────────────────────────────
+loadOverview();
+</script>
+</body>
+</html>
