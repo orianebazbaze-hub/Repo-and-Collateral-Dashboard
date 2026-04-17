@@ -1,3 +1,7 @@
+<img width="715" height="662" alt="Capture d’écran 2026-04-17 à 13 13 06" src="https://github.com/user-attachments/assets/6082fd74-f88c-4334-be20-0a0e34f2fbe0" />
+<img width="714" height="610" alt="Capture d’écran 2026-04-17 à 13 11 48" src="https://github.com/user-attachments/assets/c6469bfb-4839-4ad5-884a-afc8baaccf9c" />
+<img width="715" height="312" alt="Capture d’écran 2026-04-17 à 13 11 32" src="https://github.com/user-attachments/assets/c9922763-4b4d-4f04-bbd8-5d4e08dd6eea" />
+<img width="710" height="515" alt="Capture d’écran 2026-04-17 à 13 11 00" src="https://github.com/user-attachments/assets/ef18cee7-c324-483e-99a9-84ea2a4f3987" />
 # Collateral Management Dashboard
 
 > **Corporate Treasury | Repo & Collateral Management**  
