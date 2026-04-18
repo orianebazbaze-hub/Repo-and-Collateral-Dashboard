@@ -17,12 +17,12 @@
 
 A **Corporate Treasury repo desk** manages ~€206M collateral pool across 8 instruments and 6 repo counterparties, and needs to:
 
-✅ Track **collateral pool** in real-time (sovereigns, agencies, covered bonds, corporates)  
-✅ Apply **haircuts** per ICMA/ECB framework (by asset class × rating × maturity)  
-✅ Monitor **HQLA tiers** (L1 / L2A / L2B) and ECB eligibility  
-✅ Compute **Initial Margin** (SIMM-inspired) and **Variation Margin** per repo  
-✅ Trigger **margin calls** with threshold, MTA, rounding per CSA/GMRA terms  
-✅ Run **stress scenarios** (parallel rate shifts −200bp to +200bp)
+Track **collateral pool** in real-time (sovereigns, agencies, covered bonds, corporates)  
+Apply **haircuts** per ICMA/ECB framework (by asset class × rating × maturity)  
+Monitor **HQLA tiers** (L1 / L2A / L2B) and ECB eligibility  
+Compute **Initial Margin** (SIMM-inspired) and **Variation Margin** per repo  
+Trigger **margin calls** with threshold, MTA, rounding per CSA/GMRA terms  
+Run **stress scenarios** (parallel rate shifts −200bp to +200bp)
 
 This dashboard delivers all of that **in one interface**.
 
@@ -78,15 +78,16 @@ This dashboard delivers all of that **in one interface**.
 Pool MV, CV post-haircut, donut by asset class, HQLA tiers, repo summary table.
 
 ### 2. **Collateral Pool**
-Full bond inventory with live pricing (OIS curve), haircuts, HQLA tier, ECB eligibility, modified duration.
+Full bond inventory with live pricing, haircuts, HQLA tier, ECB eligibility, modified duration.
 
 ### 3. **Haircut Matrix**
 Colour-coded grid by asset class × rating × maturity bucket. Implements ICMA GMRA / ECB collateral framework logic.
 
 ### 4. **Repo Positions**
 Active book of 6 repo positions:
-- **Initial Margin (IM)** — SIMM-inspired: `notional × vol × √(MPoR/252) × z-score`
-- **Variation Margin (VM)** — `collateral value after haircut − repo notional`
+- Haircut applied to collateral per ICMA/ECB framework
+- Initial Margin (IM) — `IM = Haircut × Notional`
+- Variation Margin (VM) — `collateral value after haircut − repo notional`
 - Threshold, MTA (Minimum Transfer Amount), rounding per CSA/GMRA
 - Triparty agents (Euroclear, Clearstream) tracked separately from counterparties
 
@@ -150,12 +151,11 @@ Dashboard loads with **8 collateral instruments** (€206M) and **6 repo positio
 
 ### Margin Metrics
 
-**Initial Margin (IM)** — SIMM-inspired formula:
+**Initial Margin (IM)** — :
 ```
-IM = Notional × Vol × √(MPoR/252) × z-score
+`IM = Haircut × Notional`
 ```
-- **MPoR** (Margin Period of Risk): 5d bilateral, 2d triparty
-- **z-score**: 99% confidence ≈ 2.33
+
 
 **Variation Margin (VM)**
 ```
@@ -211,10 +211,10 @@ collateral_dashboard/
 
 ## Limitations & Notes
 
-⚠️ **Portfolio is fictitious** — rates, notionals, haircuts are simulated  
-⚠️ **Simplified IM model** — real SIMM is multi-factor (delta, vega, curvature, base corr)  
-⚠️ **Parallel shifts only** — real stress uses key rate durations, non-parallel twists  
-⚠️ **No real-time market data feeds** — all rates hard-coded (for demo)  
+ **Portfolio is fictitious** — rates, notionals, haircuts are simulated  
+ **Simplified IM model** — real SIMM is multi-factor (delta, vega, curvature, base corr)  
+ **Parallel shifts only** — real stress uses key rate durations, non-parallel twists  
+ **No real-time market data feeds** — all rates hard-coded (for demo)  
 
 ---
 
