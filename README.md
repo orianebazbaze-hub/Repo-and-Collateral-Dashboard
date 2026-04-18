@@ -1,7 +1,3 @@
-<img width="710" height="515" alt="Capture d’écran 2026-04-17 à 13 11 00" src="https://github.com/user-attachments/assets/ef18cee7-c324-483e-99a9-84ea2a4f3987" />
-<img width="715" height="312" alt="Capture d’écran 2026-04-17 à 13 11 32" src="https://github.com/user-attachments/assets/c9922763-4b4d-4f04-bbd8-5d4e08dd6eea" />
-<img width="714" height="610" alt="Capture d’écran 2026-04-17 à 13 11 48" src="https://github.com/user-attachments/assets/c6469bfb-4839-4ad5-884a-afc8baaccf9c" />
-<img width="715" height="662" alt="Capture d’écran 2026-04-17 à 13 13 06" src="https://github.com/user-attachments/assets/6082fd74-f88c-4334-be20-0a0e34f2fbe0" />
 
 # Collateral Management Dashboard
 
@@ -11,6 +7,12 @@
 ![Python](https://img.shields.io/badge/Python-3.10+-blue) ![Flask](https://img.shields.io/badge/Flask-3.0-green) ![JavaScript](https="img.shields.io/badge/JavaScript-ES2022-yellow")
 
 > **Fictitious portfolio for demonstration purposes only.** Instruments (OAT, Bund, BTP, KfW, CADES, LVMH, Total), notionals, repo rates and market parameters are simulated. The purpose is to demonstrate collateral management, margin computation and stress testing capabilities.
+
+<img width="710" height="515" alt="Capture d’écran 2026-04-17 à 13 11 00" src="https://github.com/user-attachments/assets/ef18cee7-c324-483e-99a9-84ea2a4f3987" />
+<img width="715" height="312" alt="Capture d’écran 2026-04-17 à 13 11 32" src="https://github.com/user-attachments/assets/c9922763-4b4d-4f04-bbd8-5d4e08dd6eea" />
+<img width="714" height="610" alt="Capture d’écran 2026-04-17 à 13 11 48" src="https://github.com/user-attachments/assets/c6469bfb-4839-4ad5-884a-afc8baaccf9c" />
+<img width="715" height="662" alt="Capture d’écran 2026-04-17 à 13 13 06" src="https://github.com/user-attachments/assets/6082fd74-f88c-4334-be20-0a0e34f2fbe0" />
+
 
 ---
 
@@ -59,15 +61,7 @@ Parallel rate shift (−200bp to +200bp) applied to all collateral bonds:
 - New margin calls triggered by the scenario
 - Sensitivity curve: number of calls and CV change vs. rate shift
 
-## API Reference
 
-| Endpoint | Description |
-|---|---|
-| `GET /api/pool` | Collateral pool with pricing, haircuts, CV |
-| `GET /api/repo` | Repo book with IM, VM, margin call status |
-| `GET /api/haircuts` | Full haircut matrix |
-| `GET /api/margin_calls` | Per-counterparty margin call detail |
-| `GET /api/stress?shift=N` | Stress scenario at N basis points |
 
 ## Regulatory References
 - ICMA Global Master Repo Agreement (GMRA)
