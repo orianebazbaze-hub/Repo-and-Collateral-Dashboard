@@ -1,7 +1,7 @@
 """
 Collateral Management Dashboard — Flask Backend
 ================================================
-Corporate Treasury | Repo & Collateral Management
+ | Repo & Collateral Management
 
 Covers:
   - Collateral pool with haircuts by asset class / rating / maturity
