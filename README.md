@@ -224,3 +224,6 @@ collateral_dashboard/
 - **Full SIMM implementation** (ISDA CRIF format support)
 - **CSA-based collateral optimisation** (cheapest-to-deliver logic)
 - **Triparty messaging** (Euroclear CmaX, Clearstream Xemac)
+- 
+## Author
+ob
